@@ -48,6 +48,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
+    // DI
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

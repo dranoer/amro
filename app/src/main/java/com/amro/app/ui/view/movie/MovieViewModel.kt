@@ -3,11 +3,14 @@ package com.amro.app.ui.view.movie
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.amro.app.domain.repository.MoviesRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MovieViewModelconstructor(private val repository: MoviesRepository) : ViewModel() {
+@HiltViewModel
+class MovieViewModelconstructor @Inject constructor(private val repository: MoviesRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MovieUiState>(MovieUiState.Loading)
     val uiState = _uiState.asStateFlow()
