@@ -36,7 +36,7 @@ internal fun DetailScreen(
     }
 
     DetailScaffold(
-        title = (state as? DetailUiState.Success)?.item?.title ?: "Movie",
+        title = (state as? DetailUiState.Success)?.item?.title ?: "",
         onBackClick = onBackClick
     ) { padding ->
         DetailScreenContent(

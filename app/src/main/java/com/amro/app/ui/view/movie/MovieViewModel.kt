@@ -34,7 +34,10 @@ internal class MovieViewModel @Inject constructor(val useCase: MovieUseCase) : V
                 allGenres = useCase.getGenres().toUiGenres()
                 allMovies = useCase.getTrendingMovies().toUiMovies()
 
-                updateState(selectedGenre = null)
+                updateState(
+                    selectedGenre = null,
+                    sortOrder = SortOrder.POPULARITY_DESC
+                )
             } catch (e: Exception) {
                 _uiState.value = MovieUiState.Error(e.message ?: "Unknown error")
             }
@@ -44,11 +47,25 @@ internal class MovieViewModel @Inject constructor(val useCase: MovieUseCase) : V
     internal fun onGenreSelected(genre: GenreModel) {
         val currentState = _uiState.value as? MovieUiState.Success ?: return
         val nextGenre = if (currentState.selectedGenre == genre) null else genre
-        updateState(nextGenre)
+        updateState(
+            selectedGenre = nextGenre,
+            sortOrder = currentState.sortOrder
+        )
     }
 
-    private fun updateState(selectedGenre: GenreModel?) {
-        val filtered = if (selectedGenre == null) {
+    internal fun onSortOrderChanged(order: SortOrder) {
+        val currentState = _uiState.value as? MovieUiState.Success ?: return
+        updateState(
+            selectedGenre = currentState.selectedGenre,
+            sortOrder = order
+        )
+    }
+
+    private fun updateState(
+        selectedGenre: GenreModel?,
+        sortOrder: SortOrder
+    ) {
+        var processed = if (selectedGenre == null) {
             allMovies
         } else {
             allMovies.filter { movie ->
@@ -56,10 +73,20 @@ internal class MovieViewModel @Inject constructor(val useCase: MovieUseCase) : V
             }
         }
 
+        processed = when (sortOrder) {
+            SortOrder.POPULARITY_DESC -> processed.sortedByDescending { it.popularity }
+            SortOrder.POPULARITY_ASC -> processed.sortedBy { it.popularity }
+            SortOrder.TITLE_ASC -> processed.sortedBy { it.title }
+            SortOrder.TITLE_DESC -> processed.sortedByDescending { it.title }
+            SortOrder.RELEASE_DATE_DESC -> processed.sortedByDescending { it.releaseDate }
+            SortOrder.RELEASE_DATE_ASC -> processed.sortedBy { it.releaseDate }
+        }
+
         _uiState.value = MovieUiState.Success(
-            items = filtered,
+            items = processed,
             genres = allGenres,
-            selectedGenre = selectedGenre
+            selectedGenre = selectedGenre,
+            sortOrder = sortOrder
         )
     }
 }

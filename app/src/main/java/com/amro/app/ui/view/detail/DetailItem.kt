@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -89,7 +90,7 @@ private fun DetailOverview(description: String) {
     Column {
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Overview",
+            text = stringResource(R.string.overview),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -107,30 +108,30 @@ private fun DetailInfoSection(movie: DetailModel) {
         HorizontalDivider()
         Spacer(modifier = Modifier.height(16.dp))
 
-        DetailRow("Genres", movie.genresText)
-        DetailRow("Status", movie.status ?: "-")
-        DetailRow("Runtime", if (movie.runtime != null) "${movie.runtime} mins" else "-")
-        DetailRow("Release Date", movie.releaseDate ?: "-")
+        DetailRow(stringResource(R.string.genres), movie.genresText)
+        DetailRow(stringResource(R.string.status), movie.status ?: "-")
+        DetailRow(stringResource(R.string.runtime), if (movie.runtime != null) stringResource(R.string.mins, movie.runtime) else "-")
+        DetailRow(stringResource(R.string.release_date), movie.releaseDate ?: "-")
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        DetailRow("Vote Average", movie.voteAverage?.toString() ?: "-")
-        DetailRow("Vote Count", movie.voteCount?.toString() ?: "-")
+        DetailRow(stringResource(R.string.vote_average), movie.voteAverage?.toString() ?: "-")
+        DetailRow(stringResource(R.string.vote_count), movie.voteCount?.toString() ?: "-")
 
         Spacer(modifier = Modifier.height(8.dp))
 
         DetailRow(
-            "Budget",
+            stringResource(R.string.budget),
             if (movie.budget != null && movie.budget > 0) currencyFormatter.format(movie.budget) else "-"
         )
         DetailRow(
-            "Revenue",
+            stringResource(R.string.revenue),
             if (movie.revenue != null && movie.revenue > 0) currencyFormatter.format(movie.revenue) else "-"
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        DetailRow("IMDB", movie.imdbUrl ?: "-")
+        DetailRow(stringResource(R.string.imdb), movie.imdbUrl ?: "-")
     }
 }
 
