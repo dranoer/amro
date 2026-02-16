@@ -2,6 +2,8 @@ package com.amro.app.ui.view.movie
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.amro.app.core.ApiResult
+import com.amro.app.core.toUserMessage
 import com.amro.app.domain.usecase.MovieUseCase
 import com.amro.app.ui.mapper.MovieUiMapper.toUiGenres
 import com.amro.app.ui.mapper.MovieUiMapper.toUiMovies
@@ -9,84 +11,92 @@ import com.amro.app.ui.model.GenreModel
 import com.amro.app.ui.model.MovieModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-internal class MovieViewModel @Inject constructor(val useCase: MovieUseCase) : ViewModel() {
+internal class MovieViewModel @Inject constructor(private val useCase: MovieUseCase) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<MovieUiState>(MovieUiState.Loading)
-    val uiState: StateFlow<MovieUiState> = _uiState.asStateFlow()
+    private val _allMovies = MutableStateFlow<List<MovieModel>>(emptyList())
+    private val _allGenres = MutableStateFlow<List<GenreModel>>(emptyList())
+    private val _selectedGenre = MutableStateFlow<GenreModel?>(null)
+    private val _sortOrder = MutableStateFlow(SortOrder.POPULARITY_DESC)
+    private val _isLoading = MutableStateFlow(true)
+    private val _error = MutableStateFlow<String?>(null)
 
-    private var allMovies: List<MovieModel> = emptyList()
-    private var allGenres: List<GenreModel> = emptyList()
+    val uiState: StateFlow<MovieUiState> = combine(
+        combine(_isLoading, _error) { l, e -> l to e },
+        _allMovies,
+        _allGenres,
+        _selectedGenre,
+        _sortOrder
+    ) { (loading, error), movies, genres, selected, sortOrder ->
+        when {
+            loading -> MovieUiState.Loading
+            error != null -> MovieUiState.Error(error)
+            else -> {
+                var processed = if (selected == null) {
+                    movies
+                } else {
+                    movies.filter { movie -> movie.genres.any { it.id == selected.id } }
+                }
+
+                processed = when (sortOrder) {
+                    SortOrder.POPULARITY_DESC -> processed.sortedByDescending { it.popularity }
+                    SortOrder.POPULARITY_ASC -> processed.sortedBy { it.popularity }
+                    SortOrder.TITLE_ASC -> processed.sortedBy { it.title }
+                    SortOrder.TITLE_DESC -> processed.sortedByDescending { it.title }
+                    SortOrder.RELEASE_DATE_DESC -> processed.sortedByDescending { it.releaseDate }
+                    SortOrder.RELEASE_DATE_ASC -> processed.sortedBy { it.releaseDate }
+                }
+
+                MovieUiState.Success(
+                    items = processed,
+                    genres = genres,
+                    selectedGenre = selected,
+                    sortOrder = sortOrder
+                )
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = MovieUiState.Loading
+    )
 
     init {
         getMovies()
     }
 
-    internal fun getMovies() {
+    fun getMovies() {
         viewModelScope.launch {
-            _uiState.value = MovieUiState.Loading
-            try {
-                allGenres = useCase.getGenres().toUiGenres()
-                allMovies = useCase.getTrendingMovies().toUiMovies()
+            _isLoading.value = true
+            _error.value = null
+            
+            val genresResult = useCase.getGenres()
+            val moviesResult = useCase.getTrendingMovies()
 
-                updateState(
-                    selectedGenre = null,
-                    sortOrder = SortOrder.POPULARITY_DESC
-                )
-            } catch (e: Exception) {
-                _uiState.value = MovieUiState.Error(e.message ?: "Unknown error")
+            if (genresResult is ApiResult.Success && moviesResult is ApiResult.Success) {
+                _allGenres.value = genresResult.data.toUiGenres()
+                _allMovies.value = moviesResult.data.toUiMovies()
+                _isLoading.value = false
+            } else {
+                val err = (genresResult as? ApiResult.Error) ?: (moviesResult as? ApiResult.Error)
+                _error.value = err?.type?.toUserMessage() ?: "Unknown error"
+                _isLoading.value = false
             }
         }
     }
 
-    internal fun onGenreSelected(genre: GenreModel) {
-        val currentState = _uiState.value as? MovieUiState.Success ?: return
-        val nextGenre = if (currentState.selectedGenre == genre) null else genre
-        updateState(
-            selectedGenre = nextGenre,
-            sortOrder = currentState.sortOrder
-        )
+    fun onGenreSelected(genre: GenreModel) {
+        _selectedGenre.value = if (_selectedGenre.value == genre) null else genre
     }
 
-    internal fun onSortOrderChanged(order: SortOrder) {
-        val currentState = _uiState.value as? MovieUiState.Success ?: return
-        updateState(
-            selectedGenre = currentState.selectedGenre,
-            sortOrder = order
-        )
-    }
-
-    private fun updateState(
-        selectedGenre: GenreModel?,
-        sortOrder: SortOrder
-    ) {
-        var processed = if (selectedGenre == null) {
-            allMovies
-        } else {
-            allMovies.filter { movie ->
-                movie.genres.any { it.id == selectedGenre.id }
-            }
-        }
-
-        processed = when (sortOrder) {
-            SortOrder.POPULARITY_DESC -> processed.sortedByDescending { it.popularity }
-            SortOrder.POPULARITY_ASC -> processed.sortedBy { it.popularity }
-            SortOrder.TITLE_ASC -> processed.sortedBy { it.title }
-            SortOrder.TITLE_DESC -> processed.sortedByDescending { it.title }
-            SortOrder.RELEASE_DATE_DESC -> processed.sortedByDescending { it.releaseDate }
-            SortOrder.RELEASE_DATE_ASC -> processed.sortedBy { it.releaseDate }
-        }
-
-        _uiState.value = MovieUiState.Success(
-            items = processed,
-            genres = allGenres,
-            selectedGenre = selectedGenre,
-            sortOrder = sortOrder
-        )
+    fun onSortOrderChanged(order: SortOrder) {
+        _sortOrder.value = order
     }
 }

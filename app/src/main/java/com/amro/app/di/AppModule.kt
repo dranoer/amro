@@ -1,8 +1,8 @@
 package com.amro.app.di
 
 import com.amro.app.data.remote.ApiService
-import com.amro.app.data.remote.Constants
-import com.amro.app.data.remote.Constants.BEARER_TOKEN
+import com.amro.app.core.Constants
+import com.amro.app.core.Constants.BEARER_TOKEN
 import com.amro.app.data.remote.auth.AuthInterceptor
 import com.amro.app.data.repository.MovieRepositoryImpl
 import com.amro.app.domain.repository.MovieRepository

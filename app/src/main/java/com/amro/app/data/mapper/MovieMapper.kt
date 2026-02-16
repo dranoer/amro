@@ -1,6 +1,6 @@
 package com.amro.app.data.mapper
 
-import com.amro.app.data.remote.Constants
+import com.amro.app.core.Constants
 import com.amro.app.data.remote.model.DetailDto
 import com.amro.app.data.remote.model.GenreDto
 import com.amro.app.data.remote.model.MovieDto

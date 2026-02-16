@@ -1,4 +1,4 @@
-package com.amro.app.data.remote
+package com.amro.app.core
 
 object Constants {
     const val BASE_URL = "https://api.themoviedb.org/3/"
