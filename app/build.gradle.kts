@@ -1,13 +1,18 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.kapt)
 }
 
 android {
     namespace = "com.amro.app"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.amro.app"
@@ -29,11 +34,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
+    }
+}
+
+tasks.withType<KotlinJvmCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -47,10 +58,19 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.coil)
 
     // DI
     implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+
+    // Network
+    implementation(libs.retrofit)
+    implementation(libs.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+    implementation(libs.serialization.json)
 
     // Test
     testImplementation(libs.junit)
