@@ -1,6 +1,7 @@
 package com.amro.app.domain.usecase
 
 import com.amro.app.domain.model.Detail
+import com.amro.app.domain.model.Genre
 import com.amro.app.domain.model.Movie
 import com.amro.app.domain.repository.MovieRepository
 import javax.inject.Inject
@@ -14,5 +15,9 @@ class MovieUseCase @Inject constructor(
 
     suspend fun getMovieDetail(id: Int): Detail {
         return repository.getDetail(id)
+    }
+
+    suspend fun getGenres(): List<Genre> {
+        return repository.getGenres()
     }
 }
