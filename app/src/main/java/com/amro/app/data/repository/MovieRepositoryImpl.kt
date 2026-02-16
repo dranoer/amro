@@ -21,7 +21,7 @@ class MovieRepositoryImpl(private val api: ApiService) : MovieRepository {
     }
 
     override suspend fun getDetail(id: Int): Detail {
-        TODO()
+        return api.movieDetail(id).toDomain()
     }
 
     override suspend fun getGenres(): List<Genre> {

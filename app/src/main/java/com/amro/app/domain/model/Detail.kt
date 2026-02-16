@@ -1,6 +1,6 @@
 package com.amro.app.domain.model
 
-data class MovieDetail(
+data class Detail(
     val id: Int,
     val title: String,
     val tagline: String?,
@@ -15,6 +15,4 @@ data class MovieDetail(
     val imdbId: String?,
     val runtime: Int?,
     val releaseDate: String?
-) {
-    val imdbUrl: String? get() = imdbId?.let { "https://www.imdb.com/title/$it/" }
-}
+)
