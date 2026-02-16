@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Amro</string>
     <string name="back">Back</string>
+    <string name="retry">Retry</string>
 </resources>
