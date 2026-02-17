@@ -1,8 +1,9 @@
 package com.amro.app.ui.view.detail
 
+import com.amro.app.domain.model.Detail
 import com.amro.app.domain.model.Genre
-import com.amro.app.domain.model.MovieDetail
-import com.amro.app.domain.repository.FakeMoviesRepository
+import com.amro.app.domain.repository.MockMovieRepository
+import com.amro.app.domain.usecase.MovieUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -19,7 +20,8 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class DetailViewModelUnitTest {
 
-    private val repository = FakeMoviesRepository()
+    private val repository = MockMovieRepository()
+    private val useCase = MovieUseCase(repository)
     private val dispatcher = StandardTestDispatcher()
 
     @Before
@@ -35,7 +37,7 @@ class DetailViewModelUnitTest {
     @Test
     fun `given repository success when getDetail called then state is Success`() = runTest {
         // given
-        repository.detail = MovieDetail(
+        repository.detail = Detail(
             id = 1,
             title = "Movie A",
             tagline = "Tagline",
@@ -51,7 +53,7 @@ class DetailViewModelUnitTest {
             runtime = 120,
             releaseDate = "2020-01-01"
         )
-        val viewModel = DetailViewModel(repository)
+        val viewModel = DetailViewModel(useCase)
 
         // when
         viewModel.getDetail(1)
@@ -70,15 +72,15 @@ class DetailViewModelUnitTest {
     fun `given repository error when getDetail called then state is Error`() =
         runTest {
             // given
-            repository.shouldThrow = true
+            repository.shouldThrowInvalidError = true
 
             // when
-            val viewmodel = DetailViewModel(repository)
-            viewmodel.getDetail(1)
+            val viewModel = DetailViewModel(useCase)
+            viewModel.getDetail(1)
             advanceUntilIdle()
 
             // then
-            val state = viewmodel.uiState.value
+            val state = viewModel.uiState.value
             assertTrue(state is DetailUiState.Error)
             assertEquals("Something went wrong.", (state as DetailUiState.Error).message)
         }

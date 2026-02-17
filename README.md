@@ -24,3 +24,6 @@ The app follows **Clean Architecture** principles using the **MVVM** (Model-View
           ├── detail     # Movie detail screen
           └── movie      # Trending movie list screen
 ```
+
+
+**Update**: Improved UI polish and extended test coverage.

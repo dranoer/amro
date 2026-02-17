@@ -1,19 +1,22 @@
 package com.amro.app.domain.repository
 
+import com.amro.app.core.ApiResult
+import com.amro.app.core.ErrorType
+import com.amro.app.domain.model.Detail
 import com.amro.app.domain.model.Genre
 import com.amro.app.domain.model.Movie
-import com.amro.app.domain.model.MovieDetail
 
-class FakeMoviesRepository : MoviesRepository {
+class MockMovieRepository : MovieRepository {
 
-    var shouldThrow: Boolean = false
+    var shouldThrowNetworkError: Boolean = false
+    var shouldThrowInvalidError: Boolean = false
 
     var movies: List<Movie> = listOf(
         Movie(
             id = 1,
             title = "Movie A",
             posterUrl = "",
-            genreIds = listOf(35),
+            genres = null,
             popularity = 10.0,
             releaseDate = "2020-01-01"
         ),
@@ -21,7 +24,7 @@ class FakeMoviesRepository : MoviesRepository {
             id = 2,
             title = "Movie B",
             posterUrl = "",
-            genreIds = listOf(12),
+            genres = null,
             popularity = 20.0,
             releaseDate = "2021-01-01"
         ),
@@ -29,7 +32,7 @@ class FakeMoviesRepository : MoviesRepository {
             id = 3,
             title = "Movie C",
             posterUrl = "",
-            genreIds = listOf(35, 12),
+            genres = null,
             popularity = 15.0,
             releaseDate = "2019-01-01"
         ),
@@ -40,7 +43,7 @@ class FakeMoviesRepository : MoviesRepository {
         Genre(id = 12, name = "Adventure"),
     )
 
-    var detail: MovieDetail = MovieDetail(
+    var detail: Detail = Detail(
         id = 1,
         title = "Movie A",
         tagline = "Tagline",
@@ -57,18 +60,21 @@ class FakeMoviesRepository : MoviesRepository {
         releaseDate = "2020-01-01"
     )
 
-    override suspend fun getTrendingMovies(): List<Movie> {
-        if (shouldThrow) throw RuntimeException("Something went wrong.")
-        return movies
+    override suspend fun getMovies(): ApiResult<List<Movie>> {
+        if (shouldThrowNetworkError) return ApiResult.Error(ErrorType.Network)
+        if (shouldThrowInvalidError) return ApiResult.Error(ErrorType.Invalid)
+        return ApiResult.Success(movies)
     }
 
-    override suspend fun getGenres(): List<Genre> {
-        if (shouldThrow) throw RuntimeException("Something went wrong.")
-        return genres
+    override suspend fun getGenres(): ApiResult<List<Genre>> {
+        if (shouldThrowNetworkError) return ApiResult.Error(ErrorType.Network)
+        if (shouldThrowInvalidError) return ApiResult.Error(ErrorType.Invalid)
+        return ApiResult.Success(genres)
     }
 
-    override suspend fun getMovieDetail(id: Int): MovieDetail {
-        if (shouldThrow) throw RuntimeException("Something went wrong.")
-        return detail
+    override suspend fun getDetail(id: Int): ApiResult<Detail> {
+        if (shouldThrowNetworkError) return ApiResult.Error(ErrorType.Network)
+        if (shouldThrowInvalidError) return ApiResult.Error(ErrorType.Invalid)
+        return ApiResult.Success(detail)
     }
 }

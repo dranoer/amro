@@ -152,7 +152,7 @@ private fun DetailInfoSection(
         gridItems.chunked(2).forEach { rowItems ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 rowItems.forEach { (label, value) ->
-                    DetailItemRow(
+                    DetailRow(
                         label = stringResource(label),
                         value = value ?: "-",
                         modifier = Modifier.weight(1f)
@@ -160,29 +160,6 @@ private fun DetailInfoSection(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DetailItemRow(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
