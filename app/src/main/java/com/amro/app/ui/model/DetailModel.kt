@@ -1,5 +1,8 @@
 package com.amro.app.ui.model
 
+import java.text.NumberFormat
+import java.util.Locale
+
 data class DetailModel(
     val id: Int,
     val title: String,
@@ -16,6 +19,13 @@ data class DetailModel(
     val runtime: Int?,
     val releaseDate: String?
 ) {
+    private val formatter = NumberFormat.getCurrencyInstance(Locale.US)
+
     val genresText: String = genres.joinToString(separator = ", ") { it.name }
-    val imdbUrl: String? get() = imdbId?.let { "https://www.imdb.com/title/$it/" }
+    
+    val budgetText: String? = budget?.takeIf { it > 0 }?.let { formatter.format(it) }
+    
+    val revenueText: String? = revenue?.takeIf { it > 0 }?.let { formatter.format(it) }
+    
+    val imdbUrl: String? = imdbId?.let { "https://www.imdb.com/title/$it/" }
 }

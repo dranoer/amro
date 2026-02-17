@@ -1,25 +1,30 @@
 package com.amro.app.ui.view.movie
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.amro.app.R
 import com.amro.app.ui.model.GenreModel
-import com.amro.app.ui.model.MovieModel
 import com.amro.app.ui.theme.AmroTheme
 import com.amro.app.ui.view.component.ErrorView
 import com.amro.app.ui.view.component.LoadingView
@@ -47,26 +51,23 @@ internal fun MovieScreen(
     viewModel: MovieViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
     LaunchedEffect(
         (state as? MovieUiState.Success)?.selectedGenre,
         (state as? MovieUiState.Success)?.sortOrder
     ) {
-        if (state is MovieUiState.Success) {
-            listState.scrollToItem(0)
-        }
+        if (state is MovieUiState.Success) gridState.scrollToItem(0)
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.trending_movies)) },
                 actions = {
                     if (state is MovieUiState.Success) {
-                        val successState = state as MovieUiState.Success
                         SortMenu(
-                            currentOrder = successState.sortOrder,
+                            currentOrder = (state as MovieUiState.Success).sortOrder,
                             onOrderSelected = viewModel::onSortOrderChanged
                         )
                     }
@@ -76,7 +77,7 @@ internal fun MovieScreen(
     ) { padding ->
         MovieScreenContent(
             state = state,
-            listState = listState,
+            gridState = gridState,
             onGenreClick = viewModel::onGenreSelected,
             onRetry = viewModel::getMovies,
             onMovieClick = navigateToDetail,
@@ -86,48 +87,9 @@ internal fun MovieScreen(
 }
 
 @Composable
-private fun SortMenu(
-    currentOrder: SortOrder,
-    onOrderSelected: (SortOrder) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        IconButton(onClick = { expanded = true }) {
-            Icon(
-                painter = painterResource(R.drawable.ic_sort),
-                contentDescription = stringResource(R.string.sort)
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            SortOrder.entries.forEach { order ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(order.resId)) },
-                    onClick = {
-                        onOrderSelected(order)
-                        expanded = false
-                    },
-                    trailingIcon = {
-                        if (order == currentOrder) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_check),
-                                contentDescription = null
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun MovieScreenContent(
     state: MovieUiState,
-    listState: LazyListState,
+    gridState: LazyGridState,
     onGenreClick: (GenreModel) -> Unit,
     onRetry: () -> Unit,
     onMovieClick: (Int) -> Unit,
@@ -144,24 +106,21 @@ private fun MovieScreenContent(
 
         Box(modifier = Modifier.weight(1f)) {
             when (state) {
-                is MovieUiState.Loading -> {
-                    LoadingView(modifier = Modifier.fillMaxSize())
-                }
-
-                is MovieUiState.Error -> {
-                    ErrorView(
-                        message = state.message,
-                        onRetryClick = onRetry,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
+                is MovieUiState.Loading -> LoadingView(Modifier.fillMaxSize())
+                is MovieUiState.Error -> ErrorView(state.message, onRetry, Modifier.fillMaxSize())
                 is MovieUiState.Success -> {
-                    MoviesContent(
-                        movies = state.items,
-                        listState = listState,
-                        onMovieClick = onMovieClick
-                    )
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        state = gridState,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(state.items, key = { it.id }) { movie ->
+                            MovieItem(movie = movie, onClick = { onMovieClick(movie.id) })
+                        }
+                    }
                 }
             }
         }
@@ -183,6 +142,11 @@ private fun GenreFilterRow(
                 selected = genre == selectedGenre,
                 onClick = { onGenreClick(genre) },
                 label = { Text(genre.name) },
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
                 modifier = Modifier.padding(end = 8.dp)
             )
         }
@@ -190,30 +154,28 @@ private fun GenreFilterRow(
 }
 
 @Composable
-private fun MoviesContent(
-    movies: List<MovieModel>,
-    listState: LazyListState,
-    onMovieClick: (Int) -> Unit,
-    modifier: Modifier = Modifier
+private fun SortMenu(
+    currentOrder: SortOrder,
+    onOrderSelected: (SortOrder) -> Unit
 ) {
-    LazyColumn(
-        state = listState,
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp)
-    ) {
-        items(movies, key = { it.id }) { movie ->
-            MovieItem(
-                movie = movie,
-                onClick = { onMovieClick(movie.id) }
-            )
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(painterResource(R.drawable.ic_sort), stringResource(R.string.sort))
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MovieScreenPreview() {
-    AmroTheme {
-        MovieScreen(navigateToDetail = {})
+        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
+            SortOrder.entries.forEach { order ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(order.resId)) },
+                    onClick = { onOrderSelected(order); expanded = false },
+                    trailingIcon = {
+                        if (order == currentOrder) Icon(
+                            painterResource(R.drawable.ic_check),
+                            null
+                        )
+                    }
+                )
+            }
+        }
     }
 }
